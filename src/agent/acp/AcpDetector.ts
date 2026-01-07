@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { execSync } from 'child_process';
-import type { AcpBackendAll } from '@/types/acpTypes';
-import { POTENTIAL_ACP_CLIS } from '@/types/acpTypes';
 import { ProcessConfig } from '@/process/initStorage';
+import type { AcpBackendAll, PotentialAcpCli } from '@/types/acpTypes';
+import { POTENTIAL_ACP_CLIS } from '@/types/acpTypes';
+import fs from 'fs';
+import path from 'path';
 
 interface DetectedAgent {
   backend: AcpBackendAll;
@@ -60,50 +61,95 @@ class AcpDetector {
 
   /**
    * 启动时执行检测 - 使用 POTENTIAL_ACP_CLIS 列表检测已安装的 CLI
+   * 使用文件系统直接检测，不依赖 execSync，提升速度和稳定性
    */
   async initialize(): Promise<void> {
     if (this.isDetected) return;
 
-    console.log('[ACP] Starting agent detection...');
+    console.log('[ACP] ===================== ACP Detection Started =====================');
     const startTime = Date.now();
-
     const isWindows = process.platform === 'win32';
-    const whichCommand = isWindows ? 'where' : 'which';
 
-    const detected: DetectedAgent[] = [];
+    // 1. 收集所有可能的搜索路径 / Collect all possible search paths
+    const envPath = process.env.PATH || '';
+    const searchPaths = envPath.split(path.delimiter).filter((p) => p && p.trim() !== '');
 
-    // 并行检测所有潜在的 ACP CLI
-    const detectionPromises = POTENTIAL_ACP_CLIS.map((cli) => {
-      return Promise.resolve().then(() => {
-        try {
-          execSync(`${whichCommand} ${cli.cmd}`, {
-            encoding: 'utf-8',
-            stdio: 'pipe',
-            timeout: 1000,
-          });
+    // 2. 强制补充常见但可能不在 PATH 中的目录 (针对 Linux/Docker 环境)
+    //    Force add common paths that might be missing from non-interactive shell PATH
+    if (!isWindows) {
+      const extraPaths = [
+        '/usr/local/share/npm-global/bin', // npm 全局安装位置
+        '/usr/local/bin', // 常见软连接位置
+        '/usr/bin',
+        '/bin',
+        '/opt/homebrew/bin', // macOS Homebrew
+        path.join(process.env.HOME || '/root', '.npm-global/bin'), // 用户级安装
+      ];
 
-          return {
-            backend: cli.backendId,
-            name: cli.name,
-            cliPath: cli.cmd,
-            acpArgs: cli.args,
-          };
-        } catch {
-          return null;
+      // 去重添加 / Deduplicate and add
+      for (const p of extraPaths) {
+        if (!searchPaths.includes(p)) {
+          searchPaths.push(p);
         }
-      });
-    });
-
-    const results = await Promise.allSettled(detectionPromises);
-
-    // 收集检测结果
-    for (const result of results) {
-      if (result.status === 'fulfilled' && result.value) {
-        detected.push(result.value);
       }
     }
 
-    // 如果检测到ACP工具，添加内置Gemini
+    console.log(`[ACP] Search Directories (${searchPaths.length}):`);
+    // 打印前3个和包含 npm-global 的路径验证
+    // Print first 3 paths and verify npm-global path
+    searchPaths.slice(0, 3).forEach((d, i) => console.log(`[ACP]   [${i}] ${d}`));
+    const npmPath = searchPaths.find((p) => p.includes('npm-global'));
+    if (npmPath) console.log(`[ACP]   [...] ${npmPath} (Explicitly Added)`);
+
+    const detected: DetectedAgent[] = [];
+
+    // 定义核心检测函数：只使用 fs，不使用 exec
+    // Define core detection function: only use fs, not exec
+    const detectCli = (cli: PotentialAcpCli): DetectedAgent | null => {
+      console.log(`[ACP] 🔍 Scanning for: ${cli.cmd}`);
+
+      for (const dir of searchPaths) {
+        try {
+          // 构造完整路径 / Construct full path
+          const fullPath = path.join(dir, cli.cmd + (isWindows ? '.exe' : ''));
+
+          // Step 1: 检查文件是否存在 / Step 1: Check if file exists
+          if (fs.existsSync(fullPath)) {
+            // Step 2: 检查是否有执行权限 (仅 Linux/Mac) / Step 2: Check execution permission (Linux/Mac only)
+            if (!isWindows) {
+              try {
+                fs.accessSync(fullPath, fs.constants.X_OK);
+              } catch (permErr) {
+                // 文件存在但不可执行，跳过 / File exists but not executable, skip
+                continue;
+              }
+            }
+
+            console.log(`[ACP] ✅ Found: ${cli.name} (${cli.backendId})`);
+            console.log(`[ACP]    Path: ${fullPath}`);
+
+            return {
+              backend: cli.backendId,
+              name: cli.name,
+              cliPath: fullPath,
+              acpArgs: cli.args,
+            } as DetectedAgent;
+          }
+        } catch (err) {
+          // 忽略单个路径的访问错误（如权限不足的目录）
+          // Ignore errors for individual paths (e.g., permission denied)
+        }
+      }
+      return null;
+    };
+
+    // 执行检测 / Execute detection
+    for (const cli of POTENTIAL_ACP_CLIS) {
+      const result = detectCli(cli);
+      if (result) detected.push(result);
+    }
+
+    // 添加内置 Gemini / Add built-in Gemini
     if (detected.length > 0) {
       detected.unshift({
         backend: 'gemini',
@@ -113,14 +159,18 @@ class AcpDetector {
       });
     }
 
-    // Check for custom agents configuration - insert after claude if found
     await this.addCustomAgentsToList(detected);
-
     this.detectedAgents = detected;
     this.isDetected = true;
 
     const elapsed = Date.now() - startTime;
-    console.log(`[ACP] Detection completed in ${elapsed}ms, found ${detected.length} agents`);
+    console.log(`[ACP] ==================== Detection Completed ====================`);
+    console.log(`[ACP] Total Time: ${elapsed}ms`);
+    console.log(`[ACP] Detected Agents Count: ${detected.length}`);
+    detected.forEach((agent, index) => {
+      console.log(`[ACP]   ${index + 1}. ${agent.name} (${agent.cliPath || 'Built-in'})`);
+    });
+    console.log('[ACP] ==================================================');
   }
 
   /**
