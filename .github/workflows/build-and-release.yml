@@ -41,7 +41,9 @@ jobs:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     needs: code-quality
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') &&
+      (github.event_name != 'push' || matrix.run-on-push == true)
 
     strategy:
       fail-fast: false
@@ -52,26 +54,31 @@ jobs:
             command: 'node scripts/build-with-builder.js arm64 --mac --arm64'
             artifact-name: 'macos-build-arm64'
             arch: 'arm64'
+            run-on-push: false
           - platform: 'macos-x64'
             os: 'macos-14'
             command: 'node scripts/build-with-builder.js x64 --mac --x64'
             artifact-name: 'macos-build-x64'
             arch: 'x64'
+            run-on-push: false
           - platform: 'windows-x64'
             os: 'windows-2022'
             command: 'node scripts/build-with-builder.js x64 --win --x64'
             artifact-name: 'windows-build-x64'
             arch: 'x64'
+            run-on-push: false
           - platform: 'windows-arm64'
             os: 'windows-2022'
             command: 'node scripts/build-with-builder.js arm64 --win --arm64'
             artifact-name: 'windows-build-arm64'
             arch: 'arm64'
+            run-on-push: false
           - platform: 'linux'
             os: 'ubuntu-latest'
             command: 'npm run dist:linux'
             artifact-name: 'linux-build'
             arch: 'x64,arm64'
+            run-on-push: true
 
     steps:
       - name: Checkout code
