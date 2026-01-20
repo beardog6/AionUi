@@ -232,6 +232,24 @@ export interface AcpBackendConfig {
 
   /** 是否为内置助手（不可编辑/删除）/ Whether this is a built-in assistant (cannot be edited/deleted) */
   isBuiltin?: boolean;
+
+  /**
+   * 此助手启用的 skills 列表（仅 isPreset=true 时生效）
+   * 如果未指定或为空数组，将加载所有可用 skills
+   *
+   * Enabled skills for this assistant (only applies when isPreset=true).
+   * If not specified or empty array, all available skills will be loaded.
+   */
+  enabledSkills?: string[];
+
+  /**
+   * 通过 "Add Skills" 添加的自定义 skills 名称列表（仅 isPreset=true 时生效）
+   * 这些 skills 会显示在 Custom Skills 区域，即使已经被导入
+   *
+   * List of custom skill names added via "Add Skills" button (only applies when isPreset=true).
+   * These skills will be displayed in the Custom Skills section even after being imported.
+   */
+  customSkillNames?: string[];
 }
 
 // 所有后端配置 - 包括暂时禁用的 / All backend configurations - including temporarily disabled ones

@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="./resources/aionui_readme_header_0807.png" alt="AionUi Logo" width="100%">
+﻿<p align="center">
+  <img src="./resources/aionui-banner-1 copy.png" alt="AionUi - Cowork with Your CLI AI Agent" width="100%">
 </p>
 
 <p align="center">
@@ -19,18 +19,22 @@
 ---
 
 <p align="center">
-  <strong>🚀 Give Command-Line AI Tools a Graphical Interface</strong><br>
-  <em>Say goodbye to command line, enjoy a graphical interface | Multi-model support | Local data security</em>
+  <strong>🚀 Cowork with Your AI, Gemini CLI, Claude Code, Codex, Qwen Code, Goose CLI, Auggie, and more</strong><br>
+  <em>User-friendly | Visual graphical interface | Multi-model support | Local data security</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/iOfficeAI/AionUi/releases">
-    <img src="https://img.shields.io/badge/⬇️%20Download%20Now-Latest%20Release-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="30">
+    <img src="https://img.shields.io/badge/⬇️%20Download%20Now-Latest%20Release-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="50">
   </a>
 </p>
 
 <p align="center">
-  <strong>English</strong> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="https://www.aionui.com" target="_blank">Official Website</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+  <strong>English</strong> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <a href="https://www.aionui.com" target="_blank">Official Website</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+</p>
+
+<p align="center">
+  <strong>💬 Community:</strong> <a href="https://discord.gg/g6u66vV9" target="_blank">Discord (English)</a> | <a href="./resources/wechat.jpg" target="_blank">微信 (中文群)</a>
 </p>
 
 ---
@@ -53,18 +57,31 @@
 ## ✨ What Can AionUi Do?
 
 <p align="center">
-  <img src="./resources/bannerimage.png" alt="AionUi Features" width="800">
+  <img src="./resources/offica-ai BANNER-function copy.png" alt="AionUi - Cowork with Your CLI AI Agent" width="800">
 </p>
 
-### 🤖 **Multi-Agent Mode - Give Command-Line AI Tools a Graphical Interface**
+### 🤖 **Multi-Agent Mode - Cowork for Your Command-Line AI Tools, Unified Graphical Interface**
 
-_If you have installed command-line tools like Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI, Augment Code, AionUi can automatically detect them and provide a unified graphical interface_
+_AionUi includes Gemini CLI built-in, ready to use out of the box with no extra installation. If you already have command-line tools like Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI, Augment Code installed, AionUi will auto-detect them and provide a unified graphical interface for a richer experience_
 
 - ✅ **Auto Detection + Unified Interface** - Automatically recognizes local CLI tools, provides a unified graphical interface, say goodbye to command line
 - ✅ **Local Storage + Multi-Session** - Conversations saved locally, supports multiple parallel sessions, each session with independent context
 
 <p align="center">
   <img src="./resources/acp home page.gif" alt="Multi-Agent Mode Demo" width="800">
+</p>
+
+---
+
+### 📁 **Smart File Management (AI Cowork)**
+
+_Batch renaming, automatic organization, smart classification, file merging_
+
+- **Auto Organize**: Intelligently identify content and auto-classify, keeping folders tidy.
+- **Efficient Batch**: One-click rename, merge files, say goodbye to tedious manual tasks.
+
+<p align="center">
+  <img src="./resources/aionui sort file.gif" alt="Smart File Management Demo" width="800">
 </p>
 
 ---
@@ -88,18 +105,6 @@ _Intelligent image generation, editing, and recognition, powered by Gemini_
 
 <p align="center">
   <img src="./resources/Image_Generation.gif" alt="AI Image Generation Demo" width="800">
-</p>
-
-> 💡 **Need help setting up free image generation?** [Follow the tutorial to configure image generation models](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide)
-
----
-
-### 📁 **Smart File Management**
-
-_Batch renaming, automatic organization, smart classification, file merging_
-
-<p align="center">
-  <img src="https://github.com/iOfficeAI/AionUi/wiki/assets/gifs/file-management/file-organization.gif" alt="File Management Demo" width="800">
 </p>
 
 ---
@@ -136,30 +141,50 @@ AionUi --webui --remote
 
 ## 🤔 Why Choose AionUi?
 
-While command-line AI tools like Gemini CLI, Claude Code, Codex, Qwen Code are powerful, they share common pain points: conversations can't be saved, single-session limitations, cumbersome file operations, and only support a single model.
+**Just like Claude Cowork makes Claude Code easier to use, AionUi is the Cowork platform for all your command-line AI tools**
 
-AionUi provides a modern graphical interface for these command-line tools, **breaking these limitations**, making interactions simple and intuitive, while supporting multi-model switching to meet different task requirements.
+Gemini CLI, Claude Code, Codex, Qwen Code are powerful, but share common pain points: conversations can't be saved, single-session limitations, cumbersome file operations, and only support a single model.
 
-### 📊 AionUi vs Command-Line AI Tools
+AionUi provides unified **Cowork capabilities** for these command-line tools:
 
-| Feature              | AionUi                                  | Command-Line AI Tools              |
-| -------------------- | --------------------------------------- | ---------------------------------- |
-| Interface            | 🎨 Graphical Interface                  | 💻 Command Line                    |
-| Conversation Storage | ✅ Local Storage                        | ❌ Lost on Close                   |
-| Multi-Session        | ✅ Supported                            | ❌ Not Supported                   |
-| Context Management   | ✅ Independent Context, No Interference | ❌ Single Context, Easy to Confuse |
-| File Selection       | 🖱️ Click to Select                      | ⌨️ @ Command                       |
-| Multi-Model          | ✅ Supported                            | ❌ Single Model                    |
-| File Preview         | ✅ 9+ Format Visual Preview             | ❌ No Preview                      |
-| Remote Access        | ✅ WebUI Mode                           | ❌ Not Supported                   |
+- 🎯 **Unified Platform** - One interface to manage all command-line AI tools, no switching needed; includes Gemini CLI, ready to use out of the box and completely free
+- 🚀 **Multi-Tool Support** - Not only supports Claude Code, but also Gemini CLI, Codex, Qwen Code, and more
+- 🌐 **Cross-Platform** - Full platform support for macOS, Windows, Linux (Claude Cowork currently only macOS)
+- 🔄 **Multi-Model Switching** - Flexibly switch between different models in the same interface, meeting different task requirements
+- 📄 **Real-time Preview** - Visual preview for 9+ formats, immediately view the effects of AI-generated files
+- 💾 **Local Data Security** - All conversations and files saved locally, data never leaves your device
 
 ---
 
 ### ❓ Quick Q&A
 
 <details>
+<summary><strong>Q: Why is AionUi a great replacement for Claude Cowork?</strong></summary>
+A: AionUi is a **free and open-source** **Multi-AI Agent Desktop**. Compared to the official Cowork which only runs on macOS and is locked to Claude, AionUi is its **full-model, cross-platform enhanced version**, deeply covering **AI Office Automation** scenarios.
+
+| Dimension     | Claude Cowork        | AionUi (This Project)                       |
+| :------------ | :------------------- | :------------------------------------------ |
+| OS            | macOS Only           | 🍏 macOS / 🪟 Windows / 🐧 Linux            |
+| Model Support | Claude Only          | 🤖 Gemini, Claude, DeepSeek, OpenAI, Ollama |
+| Interaction   | GUI                  | 🖥️ Full GUI + WebUI Remote Access           |
+| Cost          | Subscription $100/mo | 🆓 Completely Free & Open Source            |
+
+**Deep AI Office Scenario Support:**
+
+- **File Management**: Intelligently organize messy local folders and batch rename with one click.
+- **Data Processing**: Deeply analyze and automatically beautify Excel reports.
+- **Document Generation**: Automatically write and format PPT, Word, and Markdown documents.
+- **Instant Preview**: Built-in 9+ format preview panels, making AI office collaboration results instantly visible.
+</details>
+
+<details>
+<summary><strong>Q: What can I do with AionUi?</strong></summary>
+A: It can be your **private Cowork workspace**. You can let it help you batch organize folders, deeply beautify Excel, and preview web code in real-time. It's your best graphical choice for exploring office automation workflows and enhancing your experience with Claude Code or Gemini CLI.
+</details>
+
+<details>
 <summary><strong>Q: Is AionUi ready to use out of the box?</strong></summary>
-A: Yes! After installation, you can directly use Google account login, AionUi will automatically associate with Gemini CLI, no additional configuration needed to start using.
+A: Yes! AionUi is ready right after installation with a built-in Gemini CLI—no extra installation needed. If you already have Gemini CLI or other command-line tools installed, AionUi will auto-detect them for a richer experience.
 </details>
 
 <details>
@@ -271,9 +296,15 @@ _Customize with your own CSS code, make your interface match your preferences_
 
 <p>
   <a href="https://github.com/iOfficeAI/AionUi/releases">
-    <img src="https://img.shields.io/badge/Download-Latest%20Release-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release">
+    <img src="https://img.shields.io/badge/Download-Latest%20Release-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="50">
   </a>
 </p>
+
+### 🍺 Install via Homebrew (macOS)
+
+```bash
+brew install aionui
+```
 
 ### 🔧 Simple Installation
 
@@ -300,6 +331,8 @@ _Customize with your own CSS code, make your interface match your preferences_
 - [💬 GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) - **Share ideas, make suggestions, exchange usage tips**
 - [🐛 Report Issues](https://github.com/iOfficeAI/AionUi/issues) - Report bugs or feature requests
 - [📦 Release Updates](https://github.com/iOfficeAI/AionUi/releases) - Get the latest version
+- [💬 Discord Community](https://discord.gg/g6u66vV9) - **Join our English community on Discord**
+- [💬 微信 (中文群)](./resources/wechat.jpg) - **Click to view QR code**
 
 ### 🤝 Contributing
 

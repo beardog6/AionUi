@@ -1,30 +1,29 @@
 import { ipcBridge } from '@/common';
 import { transformMessage } from '@/common/chatLib';
-import type { IProvider, TChatConversation, TokenUsageData, TProviderWithModel } from '@/common/storage';
+import type { IResponseMessage } from '@/common/ipcBridge';
+import type { TChatConversation, TokenUsageData } from '@/common/storage';
 import { uuid } from '@/common/utils';
 import ContextUsageIndicator from '@/renderer/components/ContextUsageIndicator';
 import FilePreview from '@/renderer/components/FilePreview';
 import HorizontalFileList from '@/renderer/components/HorizontalFileList';
 import SendBox from '@/renderer/components/sendbox';
 import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/ThoughtDisplay';
-import { useGeminiGoogleAuthModels } from '@/renderer/hooks/useGeminiGoogleAuthModels';
 import { useLatestRef } from '@/renderer/hooks/useLatestRef';
 import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
 import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
 import { createSetUploadFile, useSendBoxFiles } from '@/renderer/hooks/useSendBoxFiles';
+import { buildDisplayMessage, collectSelectedFiles } from '@/renderer/utils/messageFiles';
 import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
 import { allSupportedExts } from '@/renderer/services/FileService';
 import { iconColors } from '@/renderer/theme/colors';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { mergeFileSelectionItems } from '@/renderer/utils/fileSelection';
-import { hasSpecificModelCapability } from '@/renderer/utils/modelCapabilities';
 import { getModelContextLimit } from '@/renderer/utils/modelContextLimits';
-import { Button, Dropdown, Menu, Tag, Tooltip } from '@arco-design/web-react';
+import { Button, Message, Tag } from '@arco-design/web-react';
 import { Plus } from '@icon-park/react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import useSWR from 'swr';
 import type { GeminiModelSelection } from './useGeminiModelSelection';
 
 const useGeminiSendBoxDraft = getSendBoxDraftHook('gemini', {
@@ -34,32 +33,148 @@ const useGeminiSendBoxDraft = getSendBoxDraftHook('gemini', {
   uploadFile: [],
 });
 
-const useGeminiMessage = (conversation_id: string) => {
+const useGeminiMessage = (conversation_id: string, onError?: (message: IResponseMessage) => void) => {
   const addOrUpdateMessage = useAddOrUpdateMessage();
-  const [running, setRunning] = useState(false);
+  const [streamRunning, setStreamRunning] = useState(false); // API 流是否在运行
+  const [hasActiveTools, setHasActiveTools] = useState(false); // 是否有工具在执行或等待确认
   const [thought, setThought] = useState<ThoughtData>({
     description: '',
     subject: '',
   });
   const [tokenUsage, setTokenUsage] = useState<TokenUsageData | null>(null);
+  // 当前活跃的消息 ID，用于过滤旧请求的事件（防止 abort 后的事件干扰新请求）
+  // Current active message ID to filter out events from old requests (prevents aborted request events from interfering with new ones)
+  const activeMsgIdRef = useRef<string | null>(null);
+
+  // Think 消息节流：限制更新频率，减少渲染次数
+  // Throttle thought updates to reduce render frequency
+  const thoughtThrottleRef = useRef<{
+    lastUpdate: number;
+    pending: ThoughtData | null;
+    timer: ReturnType<typeof setTimeout> | null;
+  }>({ lastUpdate: 0, pending: null, timer: null });
+
+  const throttledSetThought = useMemo(() => {
+    const THROTTLE_MS = 50; // 50ms 节流间隔
+    return (data: ThoughtData) => {
+      const now = Date.now();
+      const ref = thoughtThrottleRef.current;
+
+      // 如果距离上次更新超过节流间隔，立即更新
+      if (now - ref.lastUpdate >= THROTTLE_MS) {
+        ref.lastUpdate = now;
+        ref.pending = null;
+        if (ref.timer) {
+          clearTimeout(ref.timer);
+          ref.timer = null;
+        }
+        setThought(data);
+      } else {
+        // 否则保存最新数据，等待下次更新
+        ref.pending = data;
+        if (!ref.timer) {
+          ref.timer = setTimeout(
+            () => {
+              ref.lastUpdate = Date.now();
+              ref.timer = null;
+              if (ref.pending) {
+                setThought(ref.pending);
+                ref.pending = null;
+              }
+            },
+            THROTTLE_MS - (now - ref.lastUpdate)
+          );
+        }
+      }
+    };
+  }, []);
+
+  // 清理节流定时器
+  useEffect(() => {
+    return () => {
+      if (thoughtThrottleRef.current.timer) {
+        clearTimeout(thoughtThrottleRef.current.timer);
+      }
+    };
+  }, []);
+
+  // 综合运行状态：流在运行 或 有工具在执行/等待确认
+  // Combined running state: stream is running OR tools are active
+  const running = streamRunning || hasActiveTools;
+
+  // 设置当前活跃的消息 ID / Set current active message ID
+  const setActiveMsgId = useCallback((msgId: string | null) => {
+    activeMsgIdRef.current = msgId;
+  }, []);
 
   useEffect(() => {
     return ipcBridge.geminiConversation.responseStream.on((message) => {
       if (conversation_id !== message.conversation_id) {
         return;
       }
+      // 过滤掉不属于当前活跃请求的事件（防止 abort 后的事件干扰）
+      // 注意: 只过滤 thought 和 start 等状态消息，其他消息都必须渲染
+      // Filter out events not belonging to current active request (prevents aborted events from interfering)
+      // Note: only filter out thought and start messages, other messages must be rendered
+      if (activeMsgIdRef.current && message.msg_id && message.msg_id !== activeMsgIdRef.current) {
+        // 只过滤掉 thought 和 start，其他消息都需要渲染
+        // Only filter out thought and start, other messages need to be rendered
+        if (message.type === 'thought') {
+          return;
+        }
+      }
       // console.log('responseStream.message', message);
       switch (message.type) {
         case 'thought':
-          setThought(message.data as ThoughtData);
+          throttledSetThought(message.data as ThoughtData);
           break;
         case 'start':
-          setRunning(true);
+          setStreamRunning(true);
           break;
         case 'finish':
           {
-            setRunning(false);
-            setThought({ subject: '', description: '' });
+            setStreamRunning(false);
+            // 只有当没有活跃工具时才清除 thought
+            // Only clear thought when no active tools
+            if (!hasActiveTools) {
+              setThought({ subject: '', description: '' });
+            }
+          }
+          break;
+        case 'tool_group':
+          {
+            // 检查是否有工具在执行或等待确认
+            // Check if any tools are executing or awaiting confirmation
+            const tools = message.data as Array<{ status: string; name?: string }>;
+            const activeStatuses = ['Executing', 'Confirming', 'Pending'];
+            const hasActive = tools.some((tool) => activeStatuses.includes(tool.status));
+            setHasActiveTools(hasActive);
+
+            // 如果有工具在等待确认，更新 thought 提示
+            // If tools are awaiting confirmation, update thought hint
+            const confirmingTool = tools.find((tool) => tool.status === 'Confirming');
+            if (confirmingTool) {
+              setThought({
+                subject: 'Awaiting Confirmation',
+                description: confirmingTool.name || 'Tool execution',
+              });
+            } else if (hasActive) {
+              const executingTool = tools.find((tool) => tool.status === 'Executing');
+              if (executingTool) {
+                setThought({
+                  subject: 'Executing',
+                  description: executingTool.name || 'Tool',
+                });
+              }
+            } else if (!streamRunning) {
+              // 所有工具完成且流已停止，清除 thought
+              // All tools completed and stream stopped, clear thought
+              setThought({ subject: '', description: '' });
+            }
+
+            // 继续传递消息给消息列表更新
+            // Continue passing message to message list update
+            addOrUpdateMessage(transformMessage(message));
           }
           break;
         case 'finished':
@@ -93,24 +208,27 @@ const useGeminiMessage = (conversation_id: string) => {
             }
           }
           break;
-        default:
-          {
-            // Backend handles persistence, Frontend only updates UI
-            addOrUpdateMessage(transformMessage(message));
+        default: {
+          if (message.type === 'error') {
+            onError?.(message as IResponseMessage);
           }
+          // Backend handles persistence, Frontend only updates UI
+          addOrUpdateMessage(transformMessage(message));
           break;
+        }
       }
     });
-  }, [conversation_id, addOrUpdateMessage]);
+  }, [conversation_id, addOrUpdateMessage, hasActiveTools, streamRunning, onError]);
 
   useEffect(() => {
-    setRunning(false);
+    setStreamRunning(false);
+    setHasActiveTools(false);
     setThought({ subject: '', description: '' });
     setTokenUsage(null);
     void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
       if (!res) return;
       if (res.status === 'running') {
-        setRunning(true);
+        setStreamRunning(true);
       }
       // 加载持久化的 token 使用统计
       if (res.type === 'gemini' && res.extra?.lastTokenUsage) {
@@ -123,7 +241,7 @@ const useGeminiMessage = (conversation_id: string) => {
     });
   }, [conversation_id]);
 
-  return { thought, setThought, running, tokenUsage };
+  return { thought, setThought, running, tokenUsage, setActiveMsgId };
 };
 
 const EMPTY_AT_PATH: Array<string | FileOrFolderItem> = [];
@@ -166,18 +284,90 @@ const GeminiSendBox: React.FC<{
   conversation_id: string;
   modelSelection: GeminiModelSelection;
 }> = ({ conversation_id, modelSelection }) => {
+  const [workspacePath, setWorkspacePath] = useState('');
   const { t } = useTranslation();
   const { checkAndUpdateTitle } = useAutoTitle();
-  const { thought, running, tokenUsage } = useGeminiMessage(conversation_id);
+  const quotaPromptedRef = useRef<string | null>(null);
+  const exhaustedModelsRef = useRef(new Set<string>());
+
+  const { currentModel, getDisplayModelName, providers, geminiModeLookup, getAvailableModels, handleSelectModel } = modelSelection;
+
+  const resolveFallbackTarget = useCallback(
+    (exhaustedModels: Set<string>) => {
+      if (!currentModel) return null;
+      const provider = providers.find((item) => item.id === currentModel.id) || providers.find((item) => item.platform?.toLowerCase().includes('gemini-with-google-auth'));
+      if (!provider) return null;
+
+      const isGoogleAuthProvider = provider.platform?.toLowerCase().includes('gemini-with-google-auth');
+      const manualOption = isGoogleAuthProvider ? geminiModeLookup.get('manual') : undefined;
+      const manualModels = manualOption?.subModels?.map((model) => model.value) || [];
+      const availableModels = isGoogleAuthProvider ? manualModels : getAvailableModels(provider);
+      const candidates = availableModels.filter((model) => model && model !== currentModel.useModel && !exhaustedModels.has(model) && model !== 'manual');
+
+      if (!candidates.length) return null;
+      const scoreModel = (modelName: string) => {
+        const lower = modelName.toLowerCase();
+        let score = 0;
+        if (lower.includes('lite')) score -= 2;
+        if (lower.includes('flash')) score -= 1;
+        if (lower.includes('pro')) score += 2;
+        return score;
+      };
+      const sortedCandidates = [...candidates].sort((a, b) => {
+        const scoreA = scoreModel(a);
+        const scoreB = scoreModel(b);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return a.localeCompare(b);
+      });
+      return { provider, model: sortedCandidates[0] };
+    },
+    [currentModel, providers, geminiModeLookup, getAvailableModels]
+  );
+
+  const isQuotaErrorMessage = useCallback((data: unknown) => {
+    if (typeof data !== 'string') return false;
+    const text = data.toLowerCase();
+    const hasQuota = text.includes('quota') || text.includes('resource_exhausted') || text.includes('model_capacity_exhausted') || text.includes('no capacity available');
+    const hasLimit = text.includes('limit') || text.includes('exceed') || text.includes('exhaust') || text.includes('status: 429') || text.includes('code 429') || text.includes('429') || text.includes('ratelimitexceeded');
+    return hasQuota && hasLimit;
+  }, []);
+
+  const handleGeminiError = useCallback(
+    (message: IResponseMessage) => {
+      if (!isQuotaErrorMessage(message.data)) return;
+      const msgId = message.msg_id || 'unknown';
+      if (quotaPromptedRef.current === msgId) return;
+      quotaPromptedRef.current = msgId;
+
+      if (currentModel?.useModel) {
+        exhaustedModelsRef.current.add(currentModel.useModel);
+      }
+      const fallbackTarget = resolveFallbackTarget(exhaustedModelsRef.current);
+      if (!fallbackTarget || !currentModel || fallbackTarget.model === currentModel.useModel) {
+        Message.warning(t('conversation.chat.quotaExceededNoFallback', { defaultValue: 'Model quota reached. Please switch to another available model.' }));
+        return;
+      }
+
+      void handleSelectModel(fallbackTarget.provider, fallbackTarget.model).then(() => {
+        Message.success(t('conversation.chat.quotaSwitched', { defaultValue: `Switched to ${fallbackTarget.model}.`, model: fallbackTarget.model }));
+      });
+    },
+    [currentModel, handleSelectModel, isQuotaErrorMessage, resolveFallbackTarget, t]
+  );
+
+  const { thought, running, tokenUsage, setActiveMsgId } = useGeminiMessage(conversation_id, handleGeminiError);
+
+  useEffect(() => {
+    void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
+      if (!res?.extra?.workspace) return;
+      setWorkspacePath(res.extra.workspace);
+    });
+  }, [conversation_id]);
 
   const { atPath, uploadFile, setAtPath, setUploadFile, content, setContent } = useSendBoxDraft(conversation_id);
 
   const addOrUpdateMessage = useAddOrUpdateMessage();
   const { setSendBoxHandler } = usePreviewContext();
-
-  // 从共享模型选择 hook 中获取当前模型及展示名称
-  // Read current model and display helper from shared selection hook
-  const { currentModel, getDisplayModelName } = modelSelection;
 
   // 使用 useLatestRef 保存最新的 setContent/atPath，避免重复注册 handler
   // Use useLatestRef to keep latest setters to avoid re-registering handler
@@ -197,7 +387,7 @@ const GeminiSendBox: React.FC<{
   }, [setSendBoxHandler, content]);
 
   // 使用共享的文件处理逻辑
-  const { handleFilesAdded, processMessageWithFiles, clearFiles } = useSendBoxFiles({
+  const { handleFilesAdded, clearFiles } = useSendBoxFiles({
     atPath,
     uploadFile,
     setAtPath,
@@ -207,7 +397,13 @@ const GeminiSendBox: React.FC<{
   const onSendHandler = async (message: string) => {
     if (!currentModel?.useModel) return;
     const msg_id = uuid();
-    message = processMessageWithFiles(message);
+    // 设置当前活跃的消息 ID，用于过滤掉旧请求的事件
+    // Set current active message ID to filter out events from old requests
+    setActiveMsgId(msg_id);
+
+    // 保存文件列表（清空前需要保存）/ Save file list before clearing
+    const filesToSend = collectSelectedFiles(uploadFile, atPath);
+    const hasFiles = filesToSend.length > 0;
 
     // 立即清空输入框，避免用户误以为消息没发送
     // Clear input immediately to avoid user thinking message wasn't sent
@@ -215,6 +411,8 @@ const GeminiSendBox: React.FC<{
     clearFiles();
 
     // User message: Display in UI immediately (Backend will persist when receiving from IPC)
+    // 显示原始消息，并附带选中文件名 / Display original message with selected file names
+    const displayMessage = buildDisplayMessage(message, filesToSend, workspacePath);
     addOrUpdateMessage(
       {
         id: msg_id,
@@ -222,22 +420,24 @@ const GeminiSendBox: React.FC<{
         position: 'right',
         conversation_id,
         content: {
-          content: message,
+          content: displayMessage,
         },
         createdAt: Date.now(),
       },
       true
     );
+    // 文件通过 files 参数传递给后端，不再在消息中添加 @ 前缀
+    // Files are passed via files param, no longer adding @ prefix in message
     await ipcBridge.geminiConversation.sendMessage.invoke({
-      input: message,
+      input: displayMessage,
       msg_id,
       conversation_id,
-      files: uploadFile,
+      files: filesToSend,
     });
     void checkAndUpdateTitle(conversation_id, message);
     emitter.emit('chat.history.refresh');
     emitter.emit('gemini.selected.file.clear');
-    if (uploadFile.length) {
+    if (hasFiles) {
       emitter.emit('gemini.workspace.refresh');
     }
   };
@@ -250,12 +450,16 @@ const GeminiSendBox: React.FC<{
     }
   });
 
+  // 停止会话处理函数 Stop conversation handler
+  const handleStop = () => {
+    return ipcBridge.conversation.stop.invoke({ conversation_id }).then(() => {
+      console.log('stopStream');
+    });
+  };
+
   return (
     <div className='max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px'>
-      <ThoughtDisplay thought={thought} />
-
-      {/* 显示处理中提示 / Show processing indicator */}
-      {running && !thought.subject && <div className='text-left text-t-secondary text-14px py-8px'>{t('conversation.chat.processing')}</div>}
+      <ThoughtDisplay thought={thought} running={running} onStop={handleStop} />
 
       <SendBox
         value={content}
@@ -265,11 +469,7 @@ const GeminiSendBox: React.FC<{
         // 占位提示同步右上角选择的模型，确保用户感知当前目标
         // Keep placeholder in sync with header selection so users know the active target
         placeholder={currentModel?.useModel ? t('conversation.chat.sendMessageTo', { model: getDisplayModelName(currentModel.useModel) }) : t('conversation.chat.noModelSelected')}
-        onStop={() => {
-          return ipcBridge.conversation.stop.invoke({ conversation_id }).then(() => {
-            console.log('stopStream');
-          });
-        }}
+        onStop={handleStop}
         className='z-10'
         onFilesAdded={handleFilesAdded}
         supportedExts={allSupportedExts}

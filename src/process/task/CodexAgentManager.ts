@@ -10,9 +10,11 @@ import { ipcBridge } from '@/common';
 import type { TMessage } from '@/common/chatLib';
 import { transformMessage } from '@/common/chatLib';
 import type { IResponseMessage } from '@/common/ipcBridge';
+import { AIONUI_FILES_MARKER } from '@/common/constants';
 import { uuid } from '@/common/utils';
 import { addMessage } from '@process/message';
 import BaseAgentManager from '@process/task/BaseAgentManager';
+import { prepareFirstMessage } from '@process/task/agentUtils';
 import { t } from 'i18next';
 import { CodexEventHandler } from '@/agent/codex/handlers/CodexEventHandler';
 import { CodexSessionManager } from '@/agent/codex/handlers/CodexSessionManager';
@@ -33,12 +35,14 @@ class CodexAgentManager extends BaseAgentManager<CodexAgentManagerData> implemen
   agent: CodexAgent;
   bootstrap: Promise<CodexAgent>;
   private isFirstMessage: boolean = true;
+  private options: CodexAgentManagerData; // 保存原始配置数据 / Store original config data
 
   constructor(data: CodexAgentManagerData) {
     // Do not fork a worker for Codex; we run the agent in-process now
     super('codex', data);
     this.conversation_id = data.conversation_id;
     this.workspace = data.workspace;
+    this.options = data; // 保存原始数据以便后续使用 / Save original data for later use
 
     this.initAgent(data);
   }
@@ -159,6 +163,7 @@ class CodexAgentManager extends BaseAgentManager<CodexAgentManagerData> implemen
   async sendMessage(data: { content: string; files?: string[]; msg_id?: string }) {
     try {
       await this.bootstrap;
+      const contentToSend = data.content?.includes(AIONUI_FILES_MARKER) ? data.content.split(AIONUI_FILES_MARKER)[0].trimEnd() : data.content;
 
       // Save user message to chat history only (renderer already inserts right-hand bubble)
       if (data.msg_id && data.content) {
@@ -175,17 +180,18 @@ class CodexAgentManager extends BaseAgentManager<CodexAgentManagerData> implemen
       }
 
       // 处理文件引用 - 参考 ACP 的文件引用处理
-      let processedContent = this.agent.getFileOperationHandler().processFileReferences(data.content, data.files);
+      let processedContent = this.agent.getFileOperationHandler().processFileReferences(contentToSend, data.files);
 
       // 如果是第一条消息，通过 newSession 发送以避免双消息问题
       if (this.isFirstMessage) {
         this.isFirstMessage = false;
 
-        // 注入智能助手的预设规则（如果有）
-        // Inject preset context from smart assistant (if available)
-        if (this.data.data.presetContext) {
-          processedContent = `${processedContent}\n\n<system_instruction>\n${this.data.data.presetContext}\n</system_instruction>`;
-        }
+        // 注入智能助手的预设规则和 skills（如果有）
+        // Inject preset context and skills from smart assistant (if available)
+        processedContent = await prepareFirstMessage(processedContent, {
+          presetContext: this.options.presetContext,
+          enabledSkills: this.options.enabledSkills,
+        });
 
         const result = await this.agent.newSession(this.workspace, processedContent);
 

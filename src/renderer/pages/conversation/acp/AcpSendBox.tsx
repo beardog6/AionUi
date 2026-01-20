@@ -4,7 +4,6 @@ import { transformMessage, type TMessage } from '@/common/chatLib';
 import type { IResponseMessage } from '@/common/ipcBridge';
 import { uuid } from '@/common/utils';
 import SendBox from '@/renderer/components/sendbox';
-import ShimmerText from '@/renderer/components/ShimmerText';
 import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/ThoughtDisplay';
 import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
 import { createSetUploadFile, useSendBoxFiles } from '@/renderer/hooks/useSendBoxFiles';
@@ -15,11 +14,12 @@ import { mergeFileSelectionItems } from '@/renderer/utils/fileSelection';
 import { Button, Tag } from '@arco-design/web-react';
 import { Plus } from '@icon-park/react';
 import { iconColors } from '@/renderer/theme/colors';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import FilePreview from '@/renderer/components/FilePreview';
 import HorizontalFileList from '@/renderer/components/HorizontalFileList';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
+import { buildDisplayMessage } from '@/renderer/utils/messageFiles';
 import { useLatestRef } from '@/renderer/hooks/useLatestRef';
 import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
 
@@ -40,6 +40,55 @@ const useAcpMessage = (conversation_id: string) => {
   const [acpStatus, setAcpStatus] = useState<'connecting' | 'connected' | 'authenticated' | 'session_active' | 'disconnected' | 'error' | null>(null);
   const [aiProcessing, setAiProcessing] = useState(false); // New loading state for AI response
 
+  // Think 消息节流：限制更新频率，减少渲染次数
+  // Throttle thought updates to reduce render frequency
+  const thoughtThrottleRef = useRef<{
+    lastUpdate: number;
+    pending: ThoughtData | null;
+    timer: ReturnType<typeof setTimeout> | null;
+  }>({ lastUpdate: 0, pending: null, timer: null });
+
+  const throttledSetThought = useMemo(() => {
+    const THROTTLE_MS = 50;
+    return (data: ThoughtData) => {
+      const now = Date.now();
+      const ref = thoughtThrottleRef.current;
+      if (now - ref.lastUpdate >= THROTTLE_MS) {
+        ref.lastUpdate = now;
+        ref.pending = null;
+        if (ref.timer) {
+          clearTimeout(ref.timer);
+          ref.timer = null;
+        }
+        setThought(data);
+      } else {
+        ref.pending = data;
+        if (!ref.timer) {
+          ref.timer = setTimeout(
+            () => {
+              ref.lastUpdate = Date.now();
+              ref.timer = null;
+              if (ref.pending) {
+                setThought(ref.pending);
+                ref.pending = null;
+              }
+            },
+            THROTTLE_MS - (now - ref.lastUpdate)
+          );
+        }
+      }
+    };
+  }, []);
+
+  // 清理节流定时器
+  useEffect(() => {
+    return () => {
+      if (thoughtThrottleRef.current.timer) {
+        clearTimeout(thoughtThrottleRef.current.timer);
+      }
+    };
+  }, []);
+
   const handleResponseMessage = useCallback(
     (message: IResponseMessage) => {
       if (conversation_id !== message.conversation_id) {
@@ -48,7 +97,7 @@ const useAcpMessage = (conversation_id: string) => {
       const transformedMessage = transformMessage(message);
       switch (message.type) {
         case 'thought':
-          setThought(message.data as ThoughtData);
+          throttledSetThought(message.data as ThoughtData);
           break;
         case 'start':
           setRunning(true);
@@ -95,7 +144,7 @@ const useAcpMessage = (conversation_id: string) => {
           break;
       }
     },
-    [conversation_id, addOrUpdateMessage, setThought, setRunning, setAiProcessing, setAcpStatus]
+    [conversation_id, addOrUpdateMessage, throttledSetThought, setThought, setRunning, setAiProcessing, setAcpStatus]
   );
 
   useEffect(() => {
@@ -152,11 +201,19 @@ const AcpSendBox: React.FC<{
   conversation_id: string;
   backend: AcpBackend;
 }> = ({ conversation_id, backend }) => {
+  const [workspacePath, setWorkspacePath] = useState('');
   const { thought, running, acpStatus, aiProcessing, setAiProcessing } = useAcpMessage(conversation_id);
   const { t } = useTranslation();
   const { checkAndUpdateTitle } = useAutoTitle();
   const { atPath, uploadFile, setAtPath, setUploadFile, content, setContent } = useSendBoxDraft(conversation_id);
   const { setSendBoxHandler } = usePreviewContext();
+
+  useEffect(() => {
+    void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
+      if (!res?.extra?.workspace) return;
+      setWorkspacePath(res.extra.workspace);
+    });
+  }, [conversation_id]);
 
   // 使用 useLatestRef 保存最新的 setContent/atPath，避免重复注册 handler
   // Use useLatestRef to keep latest setters to avoid re-registering handler
@@ -168,7 +225,7 @@ const AcpSendBox: React.FC<{
   const addOrUpdateMessageRef = useLatestRef(addOrUpdateMessage);
 
   // 使用共享的文件处理逻辑
-  const { handleFilesAdded, processMessageWithFiles, clearFiles } = useSendBoxFiles({
+  const { handleFilesAdded, clearFiles } = useSendBoxFiles({
     atPath,
     uploadFile,
     setAtPath,
@@ -211,6 +268,7 @@ const AcpSendBox: React.FC<{
       try {
         const initialMessage = JSON.parse(storedMessage);
         const { input, files } = initialMessage;
+        const displayMessage = buildDisplayMessage(input, files || [], workspacePath);
         const msg_id = uuid();
 
         // Start AI processing loading state (user message will be added via backend response)
@@ -218,7 +276,7 @@ const AcpSendBox: React.FC<{
 
         // Send the message
         const result = await ipcBridge.acpConversation.sendMessage.invoke({
-          input,
+          input: displayMessage,
           msg_id,
           conversation_id,
           files,
@@ -267,7 +325,7 @@ const AcpSendBox: React.FC<{
   const onSendHandler = async (message: string) => {
     const msg_id = uuid();
 
-    message = processMessageWithFiles(message);
+    const displayMessage = buildDisplayMessage(message, uploadFile, workspacePath);
 
     // 立即清空输入框，避免用户误以为消息没发送
     // Clear input immediately to avoid user thinking message wasn't sent
@@ -280,7 +338,7 @@ const AcpSendBox: React.FC<{
     // Send message via ACP
     try {
       await ipcBridge.acpConversation.sendMessage.invoke({
-        input: message,
+        input: displayMessage,
         msg_id,
         conversation_id,
         files: uploadFile,
@@ -333,16 +391,14 @@ const AcpSendBox: React.FC<{
     }
   });
 
+  // 停止会话处理函数 Stop conversation handler
+  const handleStop = () => {
+    return ipcBridge.conversation.stop.invoke({ conversation_id }).then(() => {});
+  };
+
   return (
     <div className='max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px'>
-      <ThoughtDisplay thought={thought} />
-
-      {/* 显示处理中提示 / Show processing indicator */}
-      {aiProcessing && (
-        <div className='text-left text-14px py-8px'>
-          <ShimmerText duration={2}>{t('conversation.chat.processing')}</ShimmerText>
-        </div>
-      )}
+      <ThoughtDisplay thought={thought} running={running || aiProcessing} onStop={handleStop} />
 
       <SendBox
         value={content}
@@ -350,9 +406,7 @@ const AcpSendBox: React.FC<{
         loading={running}
         disabled={false}
         placeholder={t('acp.sendbox.placeholder', { backend, defaultValue: `Send message to {{backend}}...` })}
-        onStop={() => {
-          return ipcBridge.conversation.stop.invoke({ conversation_id }).then(() => {});
-        }}
+        onStop={handleStop}
         className='z-10'
         onFilesAdded={handleFilesAdded}
         supportedExts={allSupportedExts}

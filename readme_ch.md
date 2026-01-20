@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="./resources/aionui_readme_header_0807.png" alt="AionUi Logo" width="100%">
+﻿<p align="center">
+  <img src="./resources/aionui-banner-1 copy.png" alt="AionUi - Cowork with Your CLI AI Agent" width="100%">
 </p>
 
 <p align="center">
@@ -19,18 +19,22 @@
 ---
 
 <p align="center">
-  <strong>🚀 让命令行 AI 工具拥有图形化界面</strong><br>
-  <em>告别命令行，享受图形化界面 | 多模型支持 | 本地数据安全</em>
+  <strong>🚀 Cowork 与你的AI, Gemini CLI, Claude Code, Codex, Qwen Code, Goose Cli, Auggie, 等ai agent </strong><br>
+  <em> 任何用户友好 | 可视的图形化界面 | 多模型支持 | 本地数据安全</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/iOfficeAI/AionUi/releases">
-    <img src="https://img.shields.io/badge/⬇️%20立即下载-最新版本-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="下载最新版本" height="30">
+    <img src="https://img.shields.io/badge/⬇️%20立即下载-最新版本-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="下载最新版本" height="50">
   </a>
 </p>
 
 <p align="center">
-  <a href="./readme.md">English</a> | <strong>简体中文</strong> | <a href="./readme_jp.md">日本語</a> | <a href="https://www.aionui.com" target="_blank">官网</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+  <a href="./readme.md">English</a> | <strong>简体中文</strong> | <a href="./readme_tw.md">繁體中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <a href="https://www.aionui.com" target="_blank">官网</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+</p>
+
+<p align="center">
+  <strong>💬 社区：</strong> <a href="https://discord.gg/g6u66vV9" target="_blank">Discord (English)</a> | <a href="./resources/wechat.jpg" target="_blank">微信 (中文群)</a>
 </p>
 
 ---
@@ -53,18 +57,31 @@
 ## ✨ 看看 AionUi 能做什么？
 
 <p align="center">
-  <img src="./resources/bannerimage.png" alt="AionUi 功能展示" width="800">
+  <img src="./resources/offica-ai BANNER-function copy.png" alt="AionUi - Cowork with Your CLI AI Agent" width="800">
 </p>
 
-### 🤖 **多代理模式 - 让命令行 AI 工具拥有图形界面**
+### 🤖 **多代理模式 - Cowork for 你的命令行 AI 工具，统一图形界面**
 
-_如果你已经安装了 Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Code 等命令行工具，AionUi 可以自动检测并为它们提供统一的图形界面_
+_AionUi 内置 Gemini CLI，下载即用，无需额外安装；如果你已经安装了 Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Code 等命令行工具，AionUi 会自动检测并为它们提供统一的图形界面，体验更丰富_
 
 - ✅ **自动检测 + 统一界面** - 自动识别本地 CLI 工具，提供统一的图形界面，告别命令行
 - ✅ **本地保存 + 多会话** - 对话保存在本地，支持多会话并行，每个会话独立上下文
 
 <p align="center">
   <img src="./resources/acp home page.gif" alt="多代理模式演示" width="800">
+</p>
+
+---
+
+### 📁 **智能文件管理 (AI Cowork)**
+
+_批量重命名、自动整理、智能分类、文件合并_
+
+- **自动整理**：智能识别内容并自动分类，让文件夹保持整洁。
+- **高效批量**：一键重命名、合并文件，彻底告别繁琐手动。
+
+<p align="center">
+  <img src="./resources/aionui sort file.gif" alt="智能文件管理演示" width="800">
 </p>
 
 ---
@@ -91,16 +108,6 @@ _智能图像生成、编辑和识别，由 Gemini 驱动_
 </p>
 
 > 💡 **需要帮助设置免费图像生成？** [按照教程配置图像生成模型](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide-Chinese)
-
----
-
-### 📁 **智能文件管理**
-
-_批量重命名、自动整理、智能分类、文件合并_
-
-<p align="center">
-  <img src="https://github.com/iOfficeAI/AionUi/wiki/assets/gifs/file-management/file-organization.gif" alt="文件管理演示" width="800">
-</p>
 
 ---
 
@@ -136,30 +143,48 @@ AionUi --webui --remote
 
 ## 🤔 为什么选择 AionUi？
 
-Gemini CLI、Claude Code、Codex、Qwen Code 等命令行 AI 工具虽然强大，但存在一些通用痛点：对话无法保存、单会话限制、文件操作繁琐、只能使用单一模型。
+**就像 Claude Cowork 让 Claude Code 更易用，AionUi 是你所有命令行 AI 工具的 Cowork 平台**
 
-AionUi 为这些命令行工具提供了现代化的图形界面，**打破这些限制**，让交互体验简单直观，同时支持多模型切换，满足不同任务需求。
+Gemini CLI、Claude Code、Codex、Qwen Code 等命令行工具虽然强大，但存在通用痛点：对话无法保存、单会话限制、文件操作繁琐、只能使用单一模型。
 
-### 📊 AionUi vs 命令行 AI 工具
+AionUi 为这些命令行工具提供统一的 **Cowork 能力**：
 
-| 功能       | AionUi                  | 命令行 AI 工具      |
-| ---------- | ----------------------- | ------------------- |
-| 界面       | 🎨 图形化界面           | 💻 命令行           |
-| 对话保存   | ✅ 本地保存             | ❌ 关闭即丢失       |
-| 多会话     | ✅ 支持                 | ❌ 不支持           |
-| 上下文管理 | ✅ 独立上下文，互不干扰 | ❌ 单上下文，易混淆 |
-| 文件选择   | 🖱️ 点击选择             | ⌨️ @ 命令           |
-| 多模型     | ✅ 支持                 | ❌ 单一模型         |
-| 文件预览   | ✅ 9+ 种格式可视化预览  | ❌ 无预览           |
-| 远程访问   | ✅ WebUI 模式           | ❌ 不支持           |
-
----
+- 🎯 **统一平台** - 一个界面管理所有命令行 AI 工具，无需切换；内置 Gemini CLI，下载即用且完全免费
+- 🚀 **多工具支持** - 不仅支持 Claude Code，还支持 Gemini CLI、Codex、Qwen Code 等
+- 🌐 **跨平台** - macOS、Windows、Linux 全平台支持（Claude Cowork 目前仅 macOS）
+- 🔄 **多模型切换** - 在同一个界面中灵活切换不同模型，满足不同任务需求
+- 📄 **实时预览** - 9+ 种格式可视化预览，AI 生成的文件立即查看效果
+- 💾 **本地数据安全** - 所有对话和文件保存在本地，数据不离开你的设备
 
 ### ❓ 快速问答
 
 <details>
+<summary><strong>Q: 为什么 AionUi是你Claude Cowork不错的替换选择？</strong></summary>
+A: AionUi 是一款**免费开源**的 **Multi-AI Agent Desktop  **。相比于只能在 Mac 上运行且绑死 Claude 的官方 Cowork，AionUi 是它的**全模型、跨平台增强版**，深度覆盖 **AI 办公自动化** 场景。
+
+| 维度     | Claude Cowork  | AionUi (本项目)                             |
+| :------- | :------------- | :------------------------------------------ |
+| 操作系统 | 仅 macOS       | 🍏 macOS / 🪟 Windows / 🐧 Linux            |
+| 模型支持 | 仅 Claude      | 🤖 Gemini, Claude, DeepSeek, OpenAI, Ollama |
+| 交互形式 | GUI            | 🖥️ 全功能 GUI + WebUI 远程访问              |
+| 费用     | 需订阅 $100/月 | 🆓 完全免费开源                             |
+
+**深度 AI 办公场景支持：**
+
+- **文件管理**：智能整理本地杂乱文件夹、一键批量重命名。
+- **数据处理**：深度分析并自动美化 Excel 报表。
+- **文档生成**：自动编写并排版 PPT、Word 与 Markdown 文档。
+- **即时预览**：内置 9+ 种格式预览面板，让 AI 办公协作结果即刻可见。
+</details>
+
+<details>
+<summary><strong>Q: 我可以用 AionUi 做什么？</strong></summary>
+A: 它可以成为你的**私有化 Cowork 工作空间**。你可以让它帮你批量整理文件夹、深度美化 Excel、实时预览网页代码。它是你探索办公自动化流程、增强 Claude Code 或 Gemini CLI 体验的最佳图形化选择。
+</details>
+
+<details>
 <summary><strong>Q: AionUi 是开箱即用吗？</strong></summary>
-A: 是的！安装后可以直接使用 Google 账号登录，AionUi 会自动关联 Gemini CLI，无需额外配置即可开始使用。
+A: 是的！安装后即可直接使用，内置 Gemini CLI，无需额外安装即可开始体验。如果你本机已安装并体验过 Gemini CLI 等命令行工具，AionUi 会自动识别并提供更丰富的使用体验。
 </details>
 
 <details>
@@ -271,9 +296,15 @@ _自己写 CSS 代码自定义，让你的交互界面符合你的心意_
 
 <p>
   <a href="https://github.com/iOfficeAI/AionUi/releases">
-    <img src="https://img.shields.io/badge/下载-最新版本-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="下载最新版本">
+    <img src="https://img.shields.io/badge/下载-最新版本-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="下载最新版本" height="50">
   </a>
 </p>
+
+### 🍺 通过 Homebrew 安装 (macOS)
+
+```bash
+brew install aionui
+```
 
 ### 🔧 简单安装
 
@@ -300,6 +331,8 @@ _自己写 CSS 代码自定义，让你的交互界面符合你的心意_
 - [💬 GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) - **分享想法、提出建议、交流使用心得**
 - [🐛 报告问题](https://github.com/iOfficeAI/AionUi/issues) - 反馈 Bug 或功能请求
 - [📦 发布更新](https://github.com/iOfficeAI/AionUi/releases) - 获取最新版本
+- [💬 Discord Community](https://discord.gg/g6u66vV9) - **加入我们的英文 Discord 社区**
+- [💬 微信 (中文群)](./resources/wechat.jpg) - **点击查看二维码**
 
 ### 🤝 贡献代码
 
