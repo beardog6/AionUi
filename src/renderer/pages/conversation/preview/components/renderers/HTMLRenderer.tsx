@@ -6,8 +6,8 @@
 
 import { useTypingAnimation } from '@/renderer/hooks/useTypingAnimation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { generateInspectScript } from './htmlInspectScript';
 import { useScrollSyncTarget } from '../../hooks/useScrollSyncHelpers';
+import { generateInspectScript } from './htmlInspectScript';
 
 /** 选中元素的数据结构 / Selected element data structure */
 export interface InspectedElement {
@@ -60,7 +60,9 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const w = window as any;
       if (w && w.process && w.process.type === 'renderer') return true;
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[HTMLRenderer] Failed to detect Electron environment:', e);
+    }
     return false;
   }, []);
 
@@ -220,9 +222,10 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
         })();
       `;
       // run bridge + inspect script
-      win.eval(bridge + '\n' + inspectScript);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (win as any).eval(bridge + '\n' + inspectScript);
     } catch (e) {
-      // ignore cross-origin errors
+      console.warn('[HTMLRenderer] Failed to execute inspect script in iframe:', e);
     }
   }, [inspectScript]);
 
@@ -286,7 +289,9 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
             try {
               const height = parseInt(message.slice('__CONTENT_HEIGHT__'.length), 10);
               if (!isNaN(height) && height > 0) setWebviewContentHeight(height);
-            } catch (e) {}
+            } catch (e) {
+              console.warn('[HTMLRenderer] Failed to parse content height:', e);
+            }
           }
         }
       };
@@ -297,6 +302,7 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
 
     // Browser: listen to postMessage from iframe bridge
     const handleMessage = (ev: MessageEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = ev.data as any;
       if (!data) return;
       if (typeof data === 'string' && data.startsWith('__')) {
@@ -323,7 +329,9 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
           try {
             const height = parseInt(message.slice('__CONTENT_HEIGHT__'.length), 10);
             if (!isNaN(height) && height > 0) setWebviewContentHeight(height);
-          } catch (e) {}
+          } catch (e) {
+            console.warn('[HTMLRenderer] Failed to parse content height from message:', e);
+          }
         }
         return;
       }
@@ -353,7 +361,9 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
           try {
             const height = parseInt(message.slice('__CONTENT_HEIGHT__'.length), 10);
             if (!isNaN(height) && height > 0) setWebviewContentHeight(height);
-          } catch (e) {}
+          } catch (e) {
+            console.warn('[HTMLRenderer] Failed to parse content height from message:', e);
+          }
         }
       }
     };
@@ -416,14 +426,15 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
   }, [scrollSyncScript, onScroll, isElectron]);
 
   // 监听外部滚动同步请求 / Listen for external scroll sync requests
-  const handleTargetScroll = useCallback((targetPercent: number) => {
-    if (isElectron) {
-      const webview = webviewRef.current;
-      if (!webview || !webviewLoadedRef.current) return;
+  const handleTargetScroll = useCallback(
+    (targetPercent: number) => {
+      if (isElectron) {
+        const webview = webviewRef.current;
+        if (!webview || !webviewLoadedRef.current) return;
 
-      void webview
-        .executeJavaScript(
-          `
+        void webview
+          .executeJavaScript(
+            `
           (function() {
             const scrollHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
             const clientHeight = window.innerHeight || document.documentElement.clientHeight;
@@ -431,17 +442,17 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
             window.scrollTo({ top: targetScroll, behavior: 'auto' });
           })();
         `
-        )
-        .catch(() => {});
-      return;
-    }
+          )
+          .catch(() => {});
+        return;
+      }
 
-    const iframe = iframeRef.current;
-    if (!iframe || !webviewLoadedRef.current) return;
-    try {
-      const win = iframe.contentWindow;
-      if (!win) return;
-      const script = `
+      const iframe = iframeRef.current;
+      if (!iframe || !webviewLoadedRef.current) return;
+      try {
+        const win = iframe.contentWindow;
+        if (!win) return;
+        const script = `
         (function() {
           const scrollHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
           const clientHeight = window.innerHeight || document.documentElement.clientHeight;
@@ -449,11 +460,14 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
           window.scrollTo({ top: targetScroll, behavior: 'auto' });
         })();
       `;
-      win.eval(script);
-    } catch (e) {
-      // ignore
-    }
-  }, [isElectron]);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (win as any).eval(script);
+      } catch (e) {
+        console.warn('[HTMLRenderer] Failed to execute scroll sync script in iframe:', e);
+      }
+    },
+    [isElectron]
+  );
 
   // 使用外部 containerRef 或内部 divRef / Use external containerRef or internal divRef
   const effectiveContainerRef = containerRef || divRef;
@@ -512,9 +526,10 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
             window.scrollTo({ top: targetScroll, behavior: 'auto' });
           })();
         `;
-        win.eval(script);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (win as any).eval(script);
       } catch (e) {
-        // ignore
+        console.warn('[HTMLRenderer] Failed to execute container scroll sync in iframe:', e);
       } finally {
         setTimeout(() => {
           isSyncingScrollRef.current = false;
@@ -530,7 +545,8 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
   const proxyHeight = webviewContentHeight > 0 ? webviewContentHeight : '100%';
 
   return (
-    <div ref={containerRef || divRef} className={`h-full w-full overflow-auto relative ${currentTheme === 'dark' ? 'bg-bg-1' : 'bg-white'}`}>\n      {/* 代理滚动层：使容器可滚动 / Proxy scroll layer: makes container scrollable */}    
+    <div ref={containerRef || divRef} className={`h-full w-full overflow-auto relative ${currentTheme === 'dark' ? 'bg-bg-1' : 'bg-white'}`}>
+      {/* 代理滚动层：使容器可滚动 / Proxy scroll layer: makes container scrollable */}
       <div style={{ height: proxyHeight, width: '100%', pointerEvents: 'none' }} />
       {/* 渲染 Electron webview 或 browser iframe / Render Electron webview or browser iframe */}
       {isElectron ? (
