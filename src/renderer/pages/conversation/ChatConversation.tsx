@@ -23,6 +23,8 @@ import { iconColors } from '@/renderer/theme/colors';
 import addChatIcon from '@/renderer/assets/add-chat.svg';
 import GeminiModelSelector from './gemini/GeminiModelSelector';
 import { useGeminiModelSelection } from './gemini/useGeminiModelSelection';
+import { usePresetAssistantInfo } from '@/renderer/hooks/usePresetAssistantInfo';
+// import SkillRuleGenerator from './components/SkillRuleGenerator'; // Temporarily hidden
 
 const _AssociatedConversation: React.FC<{ conversation_id: string }> = ({ conversation_id }) => {
   const { data } = useSWR(['getAssociateConversation', conversation_id], () => ipcBridge.conversation.getAssociateConversation.invoke({ conversation_id }));
@@ -95,12 +97,21 @@ const GeminiConversationPanel: React.FC<{ conversation: GeminiConversation; slid
   // Share model selection state between header and send box
   const modelSelection = useGeminiModelSelection(conversation.id, conversation.model);
   const workspaceEnabled = Boolean(conversation.extra?.workspace);
+
+  // 使用统一的 Hook 获取预设助手信息 / Use unified hook for preset assistant info
+  const presetAssistantInfo = usePresetAssistantInfo(conversation);
+
   const chatLayoutProps = {
     title: conversation.name,
     siderTitle: sliderTitle,
     sider: <ChatSider conversation={conversation} />,
     headerLeft: <GeminiModelSelector selection={modelSelection} />,
+    // headerExtra: <SkillRuleGenerator conversationId={conversation.id} workspace={conversation.extra?.workspace} />, // Temporarily hidden
     workspaceEnabled,
+    // 传递预设助手信息 / Pass preset assistant info
+    agentName: presetAssistantInfo?.name,
+    agentLogo: presetAssistantInfo?.logo,
+    agentLogoIsEmoji: presetAssistantInfo?.isEmoji,
   };
 
   return (
@@ -130,6 +141,10 @@ const ChatConversation: React.FC<{
     }
   }, [conversation, isGeminiConversation]);
 
+  // 使用统一的 Hook 获取预设助手信息（ACP/Codex 会话）
+  // Use unified hook for preset assistant info (ACP/Codex conversations)
+  const presetAssistantInfo = usePresetAssistantInfo(isGeminiConversation ? undefined : conversation);
+
   const sliderTitle = useMemo(() => {
     return (
       <div className='flex items-center justify-between'>
@@ -144,8 +159,21 @@ const ChatConversation: React.FC<{
     return <GeminiConversationPanel conversation={conversation} sliderTitle={sliderTitle} />;
   }
 
+  // 如果有预设助手信息，使用预设助手的 logo 和名称；否则使用 backend 的 logo
+  // If preset assistant info exists, use preset logo/name; otherwise use backend logo
+  const chatLayoutProps = presetAssistantInfo
+    ? {
+        agentName: presetAssistantInfo.name,
+        agentLogo: presetAssistantInfo.logo,
+        agentLogoIsEmoji: presetAssistantInfo.isEmoji,
+      }
+    : {
+        backend: conversation?.type === 'acp' ? conversation?.extra?.backend : conversation?.type === 'codex' ? 'codex' : undefined,
+        agentName: (conversation?.extra as { agentName?: string })?.agentName,
+      };
+
   return (
-    <ChatLayout title={conversation?.name} backend={conversation?.type === 'acp' ? conversation?.extra?.backend : conversation?.type === 'codex' ? 'codex' : undefined} agentName={(conversation?.extra as { agentName?: string })?.agentName} siderTitle={sliderTitle} sider={<ChatSider conversation={conversation} />} workspaceEnabled={workspaceEnabled}>
+    <ChatLayout title={conversation?.name} {...chatLayoutProps} siderTitle={sliderTitle} sider={<ChatSider conversation={conversation} />} workspaceEnabled={workspaceEnabled}>
       {conversationNode}
     </ChatLayout>
   );

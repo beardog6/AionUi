@@ -8,6 +8,7 @@ import type { CodexAgentManager } from '@/agent/codex';
 import { GeminiAgent } from '@/agent/gemini';
 import type { TChatConversation } from '@/common/storage';
 import { getDatabase } from '@process/database';
+import path from 'path';
 import { ipcBridge } from '../../common';
 import { uuid } from '../../common/utils';
 import { createAcpAgent, createCodexAgent, createGeminiAgent } from '../initAgent';
@@ -22,7 +23,25 @@ export function initConversationBridge(): void {
   ipcBridge.conversation.create.provider(async (params): Promise<TChatConversation> => {
     const { type, extra, name, model, id } = params;
     const buildConversation = () => {
-      if (type === 'gemini') return createGeminiAgent(model, extra.workspace, extra.defaultFiles, extra.webSearchEngine, extra.customWorkspace);
+      if (type === 'gemini') {
+        const extraWithPresets = extra as typeof extra & {
+          presetRules?: string;
+          enabledSkills?: string[];
+          presetAssistantId?: string;
+        };
+        let contextFileName = extra.contextFileName;
+        // Resolve relative paths to CWD (usually project root in dev)
+        // Ensure we pass an absolute path to the agent
+        if (contextFileName && !path.isAbsolute(contextFileName)) {
+          contextFileName = path.resolve(process.cwd(), contextFileName);
+        }
+        // 系统规则（初始化时注入）/ System rules (injected at initialization)
+        // skills 通过 SkillManager 加载 / Skills are loaded via SkillManager
+        const presetRules = extraWithPresets.presetRules || extraWithPresets.presetContext || extraWithPresets.context;
+        const enabledSkills = extraWithPresets.enabledSkills;
+        const presetAssistantId = extraWithPresets.presetAssistantId;
+        return createGeminiAgent(model, extra.workspace, extra.defaultFiles, extra.webSearchEngine, extra.customWorkspace, contextFileName, presetRules, enabledSkills, presetAssistantId);
+      }
       if (type === 'acp') return createAcpAgent(params);
       if (type === 'codex') return createCodexAgent(params);
       throw new Error('Invalid conversation type');
@@ -221,12 +240,13 @@ export function initConversationBridge(): void {
     }
   });
 
-  ipcBridge.conversation.update.provider(async ({ id, updates, mergeExtra }) => {
+  ipcBridge.conversation.update.provider(async ({ id, updates, mergeExtra }: { id: string; updates: Partial<TChatConversation>; mergeExtra?: boolean }) => {
     try {
       const db = getDatabase();
       const existing = db.getConversation(id);
-      const prevModel = existing.success ? (existing.data as any)?.model : undefined;
-      const nextModel = (updates as any)?.model;
+      // Only gemini type has model, use 'in' check to safely access
+      const prevModel = existing.success && existing.data && 'model' in existing.data ? existing.data.model : undefined;
+      const nextModel = 'model' in updates ? updates.model : undefined;
       const modelChanged = !!nextModel && JSON.stringify(prevModel) !== JSON.stringify(nextModel);
       // model change detection for task rebuild
 
@@ -362,7 +382,7 @@ export function initConversationBridge(): void {
     try {
       // 根据 task 类型调用对应的 sendMessage 方法
       if (task.type === 'gemini') {
-        await (task as GeminiAgentManager).sendMessage(other);
+        await (task as GeminiAgentManager).sendMessage({ ...other, files });
         return { success: true };
       } else if (task.type === 'acp') {
         await (task as AcpAgentManager).sendMessage({ content: other.input, files, msg_id: other.msg_id });

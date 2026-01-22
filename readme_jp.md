@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="./resources/aionui_readme_header_0807.png" alt="AionUi Logo" width="100%">
+﻿<p align="center">
+  <img src="./resources/aionui-banner-1 copy.png" alt="AionUi - Cowork with Your CLI AI Agent" width="100%">
 </p>
 
 <p align="center">
@@ -19,18 +19,22 @@
 ---
 
 <p align="center">
-  <strong>🚀 コマンドラインAIツールにグラフィカルインターフェースを提供</strong><br>
-  <em>コマンドラインに別れを告げ、グラフィカルインターフェースを楽しむ | マルチモデル対応 | ローカルデータセキュリティ</em>
+  <strong>🚀 Cowork とあなたのAI, Gemini CLI, Claude Code, Codex, Qwen Code, Goose CLI, Auggie, その他のAIエージェント</strong><br>
+  <em>ユーザーフレンドリー | 視覚的なグラフィカルインターフェース | マルチモデル対応 | ローカルデータセキュリティ</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/iOfficeAI/AionUi/releases">
-    <img src="https://img.shields.io/badge/⬇️%20今すぐダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="30">
+    <img src="https://img.shields.io/badge/⬇️%20今すぐダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="50">
   </a>
 </p>
 
 <p align="center">
-  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <strong>日本語</strong> | <a href="https://www.aionui.com" target="_blank">公式サイト</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <strong>日本語</strong> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <a href="https://www.aionui.com" target="_blank">公式サイト</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+</p>
+
+<p align="center">
+  <strong>💬 コミュニティ：</strong> <a href="https://discord.gg/g6u66vV9" target="_blank">Discord (English)</a> | <a href="./resources/wechat_group.png" target="_blank">微信 (中文群)</a>
 </p>
 
 ---
@@ -53,12 +57,12 @@
 ## ✨ AionUiでできること？
 
 <p align="center">
-  <img src="./resources/bannerimage.png" alt="AionUi機能紹介" width="800">
+  <img src="./resources/offica-ai BANNER-function copy.png" alt="AionUi - Cowork with Your CLI AI Agent" width="800">
 </p>
 
-### 🤖 **マルチエージェントモード - コマンドラインAIツールにグラフィカルインターフェースを提供**
+### 🤖 **マルチエージェントモード - あなたのコマンドラインAIツールのためのCowork、統一グラフィカルインターフェース**
 
-_Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Codeなどのコマンドラインツールをインストール済みの場合、AionUiは自動的に検出し、統一されたグラフィカルインターフェースを提供します_
+_AionUi には Gemini CLI を内蔵しており、ダウンロードしてすぐ使えます。追加インストール不要です。すでに Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Code などのコマンドラインツールをインストールしている場合、AionUi が自動検出して統一されたグラフィカルインターフェースを提供し、体験がさらに豊かになります_
 
 - ✅ **自動検出 + 統一インターフェース** - ローカルCLIツールを自動認識し、統一されたグラフィカルインターフェースを提供、コマンドラインに別れを告げる
 - ✅ **ローカル保存 + マルチセッション** - 会話をローカルに保存、マルチセッション並列をサポート、各セッションは独立したコンテキスト
@@ -69,9 +73,22 @@ _Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Codeなどの
 
 ---
 
+### 📁 **スマートファイル管理 (AI Cowork)**
+
+_一括リネーム、自動整理、スマート分類、ファイルマージ_
+
+- **自動整理**：コンテンツをスマートに判別して自動分類し、フォルダを整理整頓します。
+- **効率的な一括処理**：ワンクリックでリネームや結合を行い、煩雑な手作業から解放されます。
+
+<p align="center">
+  <img src="./resources/aionui sort file.gif" alt="スマートファイル管理デモ" width="800">
+</p>
+
+---
+
 ### 📄 **プレビューパネル - AI生成結果を素早く確認**
 
-_9種類以上の形式のビジュアルプレビューをサポート（PDF、Word、Excel、PPT、コード、Markdown、画像、HTML、Diffなど）_
+_9种类以上の形式のビジュアルプレビューをサポート（PDF、Word、Excel、PPT、コード、Markdown、画像、HTML、Diffなど）_
 
 - ✅ **即座に結果を確認** - AIがファイルを生成した後、アプリを切り替えることなく、すぐにプレビューを確認
 - ✅ **リアルタイム追跡 + 編集可能** - ファイル変更を自動追跡、エディタとプレビューがインテリジェントに同期；Markdown、コード、HTMLのリアルタイム編集をサポート、WYSIWYG
@@ -91,16 +108,6 @@ _インテリジェントな画像生成、編集、認識、Geminiが駆動_
 </p>
 
 > 💡 **無料画像生成の設定にヘルプが必要ですか？** [チュートリアルに従って画像生成モデルを設定](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide)
-
----
-
-### 📁 **スマートファイル管理**
-
-_一括リネーム、自動整理、スマート分類、ファイルマージ_
-
-<p align="center">
-  <img src="https://github.com/iOfficeAI/AionUi/wiki/assets/gifs/file-management/file-organization.gif" alt="ファイル管理デモ" width="800">
-</p>
 
 ---
 
@@ -136,30 +143,48 @@ AionUi --webui --remote
 
 ## 🤔 なぜAionUiを選ぶのか？
 
-Gemini CLI、Claude Code、Codex、Qwen CodeなどのコマンドラインAIツールは強力ですが、いくつかの共通の痛みがあります：会話が保存できない、単一セッション制限、ファイル操作が煩雑、単一モデルのみ使用可能。
+**Claude CoworkがClaude Codeをより使いやすくするように、AionUiはすべてのコマンドラインAIツールのためのCoworkプラットフォームです**
 
-AionUiはこれらのコマンドラインツールにモダンなグラフィカルインターフェースを提供し、**これらの制限を打破**し、インタラクション体験をシンプルで直感的にし、同時にマルチモデル切り替えをサポートし、さまざまなタスク要件を満たします。
+Gemini CLI、Claude Code、Codex、Qwen Codeなどのコマンドラインツールは強力ですが、共通の痛みがあります：会話が保存できない、単一セッション制限、ファイル操作が煩雑、単一モデルのみ使用可能。
 
-### 📊 AionUi vs コマンドラインAIツール
+AionUiはこれらのコマンドラインツールに統一された **Cowork機能** を提供します：
 
-| 機能               | AionUi                                   | コマンドラインAIツール            |
-| ------------------ | ---------------------------------------- | --------------------------------- |
-| インターフェース   | 🎨 グラフィカルインターフェース          | 💻 コマンドライン                 |
-| 会話保存           | ✅ ローカル保存                          | ❌ 閉じると失われる               |
-| マルチセッション   | ✅ サポート                              | ❌ サポートなし                   |
-| コンテキスト管理   | ✅ 独立コンテキスト、干渉なし            | ❌ 単一コンテキスト、混乱しやすい |
-| ファイル選択       | 🖱️ クリックで選択                        | ⌨️ @コマンド                      |
-| マルチモデル       | ✅ サポート                              | ❌ 単一モデル                     |
-| ファイルプレビュー | ✅ 9種類以上の形式のビジュアルプレビュー | ❌ プレビューなし                 |
-| リモートアクセス   | ✅ WebUIモード                           | ❌ サポートなし                   |
-
----
+- 🎯 **統一プラットフォーム** - すべてのコマンドラインAIツールを1つのインターフェースで管理、切り替え不要。Gemini CLI を内蔵、ダウンロードしてすぐ使えて完全無料
+- 🚀 **マルチツール対応** - Claude Codeだけでなく、Gemini CLI、Codex、Qwen Codeなどもサポート
+- 🌐 **クロスプラットフォーム** - macOS、Windows、Linux全プラットフォーム対応（Claude Coworkは現在macOSのみ）
+- 🔄 **マルチモデル切り替え** - 同じインターフェースで異なるモデルを柔軟に切り替え、さまざまなタスク要件に対応
+- 📄 **リアルタイムプレビュー** - 9種類以上の形式のビジュアルプレビュー、AI生成ファイルを即座に確認
+- 💾 **ローカルデータセキュリティ** - すべての会話とファイルをローカルに保存、データはデバイスから離れません
 
 ### ❓ クイックQ&A
 
 <details>
+<summary><strong>Q: AionUiはClaude Coworkの代替としてなぜ優れているのですか？</strong></summary>
+A: AionUiは**無料かつオープンソース**の **マルチAIエージェントデスクトップ**です。macOS限定でClaudeに縛られている公式のCoworkと比較して、AionUiは**マルチモデル・マルチプラットフォーム対応の強化版**であり、**AIオフィスオートメーション**シナリオを深くカバーしています。
+
+| 次元           | Claude Cowork                | AionUi (本プロジェクト)                     |
+| :------------- | :--------------------------- | :------------------------------------------ |
+| OS             | macOSのみ                    | 🍏 macOS / 🪟 Windows / 🐧 Linux            |
+| モデルサポート | Claudeのみ                   | 🤖 Gemini, Claude, DeepSeek, OpenAI, Ollama |
+| 対話形式       | GUI                          | 🖥️ 全機能GUI + WebUIリモートアクセス        |
+| 費用           | 月額 $100 サブスクリプション | 🆓 完全無料・オープンソース                 |
+
+**高度なAIオフィスシナリオサポート：**
+
+- **ファイル管理**：散らかったローカルフォルダをインテリジェントに整理し、ワンクリックで一括リネーム。
+- **データ処理**：Excelレポートを深く分析し、自動的に美化。
+- **ドキュメント生成**：PPT、Word、Markdownドキュメントを自動的に作成・フォーマット。
+- **即時プレビュー**：9種類以上の形式のプレビューパネルを内蔵し、AIオフィスコラボレーションの結果を即座に確認。
+</details>
+
+<details>
+<summary><strong>Q: AionUiで何ができますか？</strong></summary>
+A: AionUiはあなたの**プライベートなCoworkワークスペース**になります。フォルダの自動整理、Excelの美化、ウェブコードのリアルタイムプレビューなどをAIに任せることができます。オフィスオートメーションのワークフローを探索し、Claude CodeやGemini CLIの体験を向上させるための最適なグラフィカルな選択肢です。
+</details>
+
+<details>
 <summary><strong>Q: AionUiはすぐに使えますか？</strong></summary>
-A: はい！インストール後、Googleアカウントでログインするだけで使用できます。AionUiは自動的にGemini CLIと関連付けられ、追加の設定なしで使用を開始できます。
+A: はい！インストール後すぐに使えます。Gemini CLI を内蔵しているため追加インストールは不要です。すでに Gemini CLI などのコマンドラインツールを使っている場合は、AionUi が自動認識してより豊かな体験を提供します。
 </details>
 
 <details>
@@ -271,9 +296,15 @@ _独自のCSSコードでカスタマイズし、インターフェースを好�
 
 <p>
   <a href="https://github.com/iOfficeAI/AionUi/releases">
-    <img src="https://img.shields.io/badge/ダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード">
+    <img src="https://img.shields.io/badge/ダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="50">
   </a>
 </p>
+
+### 🍺 Homebrewでインストール (macOS)
+
+```bash
+brew install aionui
+```
 
 ### 🔧 簡単インストール
 
@@ -300,6 +331,8 @@ _独自のCSSコードでカスタマイズし、インターフェースを好�
 - [💬 GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) - **アイデアを共有、提案、使用のヒントを交換**
 - [🐛 問題を報告](https://github.com/iOfficeAI/AionUi/issues) - バグや機能リクエストを報告
 - [📦 リリース更新](https://github.com/iOfficeAI/AionUi/releases) - 最新版を取得
+- [💬 Discord Community](https://discord.gg/g6u66vV9) - **Discord の英語コミュニティに参加**
+- [💬 微信 (中文群)](./resources/wechat_group.png) - **QRコードを表示するにはクリック**
 
 ### 🤝 コード貢献
 

@@ -10,6 +10,7 @@ import type { McpSource } from '../process/services/mcpServices/McpProtocol';
 import type { AcpBackend } from '../types/acpTypes';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel } from './storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from './types/preview';
+import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from './utils/protocolDetector';
 
 export const shell = {
   openFile: bridge.buildProvider<void, string>('open-file'), // 使用系统默认程序打开文件
@@ -70,6 +71,26 @@ export const fs = {
   >('copy-files-to-workspace'), // 复制文件到工作空间 (Copy files into workspace)
   removeEntry: bridge.buildProvider<IBridgeResponse, { path: string }>('remove-entry'), // 删除文件或文件夹
   renameEntry: bridge.buildProvider<IBridgeResponse<{ newPath: string }>, { path: string; newName: string }>('rename-entry'), // 重命名文件或文件夹
+  readBuiltinRule: bridge.buildProvider<string, { fileName: string }>('read-builtin-rule'), // 读取内置 rules 文件
+  readBuiltinSkill: bridge.buildProvider<string, { fileName: string }>('read-builtin-skill'), // 读取内置 skills 文件
+  // 助手规则文件操作 / Assistant rule file operations
+  readAssistantRule: bridge.buildProvider<string, { assistantId: string; locale?: string }>('read-assistant-rule'), // 读取助手规则文件
+  writeAssistantRule: bridge.buildProvider<boolean, { assistantId: string; content: string; locale?: string }>('write-assistant-rule'), // 写入助手规则文件
+  deleteAssistantRule: bridge.buildProvider<boolean, { assistantId: string }>('delete-assistant-rule'), // 删除助手规则文件
+  // 助手技能文件操作 / Assistant skill file operations
+  readAssistantSkill: bridge.buildProvider<string, { assistantId: string; locale?: string }>('read-assistant-skill'), // 读取助手技能文件
+  writeAssistantSkill: bridge.buildProvider<boolean, { assistantId: string; content: string; locale?: string }>('write-assistant-skill'), // 写入助手技能文件
+  deleteAssistantSkill: bridge.buildProvider<boolean, { assistantId: string }>('delete-assistant-skill'), // 删除助手技能文件
+  // 获取可用 skills 列表 / List available skills from skills directory
+  listAvailableSkills: bridge.buildProvider<Array<{ name: string; description: string; location: string; isCustom: boolean }>, void>('list-available-skills'),
+  // 读取 skill 信息（不导入）/ Read skill info without importing
+  readSkillInfo: bridge.buildProvider<IBridgeResponse<{ name: string; description: string }>, { skillPath: string }>('read-skill-info'),
+  // 导入 skill 目录 / Import skill directory
+  importSkill: bridge.buildProvider<IBridgeResponse<{ skillName: string }>, { skillPath: string }>('import-skill'),
+  // 扫描目录下的 skills / Scan directory for skills
+  scanForSkills: bridge.buildProvider<IBridgeResponse<Array<{ name: string; description: string; path: string }>>, { folderPath: string }>('scan-for-skills'),
+  // 检测常见的 skills 路径 / Detect common skills paths
+  detectCommonSkillPaths: bridge.buildProvider<IBridgeResponse<Array<{ name: string; path: string }>>, void>('detect-common-skill-paths'),
 };
 
 export const fileWatch = {
@@ -105,6 +126,8 @@ export const mode = {
   fetchModelList: bridge.buildProvider<IBridgeResponse<{ mode: Array<string>; fix_base_url?: string }>, { base_url?: string; api_key: string; try_fix?: boolean; platform?: string }>('mode.get-model-list'),
   saveModelConfig: bridge.buildProvider<IBridgeResponse, IProvider[]>('mode.save-model-config'),
   getModelConfig: bridge.buildProvider<IProvider[], void>('mode.get-model-config'),
+  /** 协议检测接口 - 自动检测 API 端点使用的协议类型 / Protocol detection - auto-detect API protocol type */
+  detectProtocol: bridge.buildProvider<IBridgeResponse<ProtocolDetectionResponse>, ProtocolDetectionRequest>('mode.detect-protocol'),
 };
 
 // ACP对话相关接口 - 复用统一的conversation接口
@@ -113,7 +136,21 @@ export const acpConversation = {
   confirmMessage: bridge.buildProvider<IBridgeResponse, IConfirmMessageParams>('acp.input.confirm.message'),
   responseStream: conversation.responseStream,
   detectCliPath: bridge.buildProvider<IBridgeResponse<{ path?: string }>, { backend: AcpBackend }>('acp.detect-cli-path'),
-  getAvailableAgents: bridge.buildProvider<IBridgeResponse<Array<{ backend: AcpBackend; name: string; cliPath?: string; customAgentId?: string }>>, void>('acp.get-available-agents'),
+  getAvailableAgents: bridge.buildProvider<
+    IBridgeResponse<
+      Array<{
+        backend: AcpBackend;
+        name: string;
+        cliPath?: string;
+        customAgentId?: string;
+        isPreset?: boolean;
+        context?: string;
+        avatar?: string;
+        presetAgentType?: 'gemini' | 'claude' | 'codex';
+      }>
+    >,
+    void
+  >('acp.get-available-agents'),
   checkEnv: bridge.buildProvider<{ env: Record<string, string> }, void>('acp.check.env'),
   refreshCustomAgents: bridge.buildProvider<IBridgeResponse, void>('acp.refresh-custom-agents'),
   // clearAllCache: bridge.buildProvider<IBridgeResponse<{ details?: any }>, void>('acp.clear.all.cache'),
@@ -199,7 +236,31 @@ export interface ICreateConversationParams {
   id?: string;
   name?: string;
   model: TProviderWithModel;
-  extra: { workspace?: string; customWorkspace?: boolean; defaultFiles?: string[]; backend?: AcpBackend; cliPath?: string; webSearchEngine?: 'google' | 'default'; agentName?: string; customAgentId?: string };
+  extra: {
+    workspace?: string;
+    customWorkspace?: boolean;
+    defaultFiles?: string[];
+    backend?: AcpBackend;
+    cliPath?: string;
+    webSearchEngine?: 'google' | 'default';
+    agentName?: string;
+    customAgentId?: string;
+    context?: string;
+    contextFileName?: string; // For gemini preset agents
+    // System rules for smart assistants
+    presetRules?: string; // system rules injected at initialization
+    /** Enabled skills list for filtering SkillManager skills */
+    enabledSkills?: string[];
+    /**
+     * Preset context/rules to inject into the first message.
+     * Used by smart assistants to provide custom prompts/rules.
+     * For Gemini: injected via contextContent
+     * For ACP/Codex: injected via <system_instruction> tag in first message
+     */
+    presetContext?: string;
+    /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
+    presetAssistantId?: string;
+  };
 }
 interface IResetConversationParams {
   id?: string;
